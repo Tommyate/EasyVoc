@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="de"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Gestenlerner – Prototyp</title>
+<title>EasyVoc</title>
 <style>
 :root{--bg:#eef1f6;--ink:#1b2240;--ac:#6b2a5c;--ok:#4f8a5b;--bad:#b8412f;--card:#fff;--line:#cfd5e3;--mute:#646c88}
 @media(prefers-color-scheme:dark){:root{--bg:#161a2e;--ink:#e8eaf4;--ac:#c58ab8;--card:#22274a;--line:#3a4170;--mute:#9aa2c4}}
@@ -36,6 +36,12 @@ header button{border:0;border-radius:99px;background:var(--card);color:var(--ink
 @keyframes sh{25%{transform:translateX(-7px)}75%{transform:translateX(7px)}}
 @media(prefers-reduced-motion:reduce){.shake{animation:none}#bar i{transition:none}}
 .res ul{padding:0;list-style:none}.res li{padding:8px 0;border-bottom:1px solid var(--line)}
+.inp{width:100%;margin-top:20px;padding:16px;font:inherit;font-size:20px;border:2px solid var(--line);border-radius:16px;background:var(--card);color:var(--ink)}
+.inp.ok{background:var(--ok);color:#fff}.inp.bad{background:var(--bad);color:#fff}
+.fb{min-height:1.6em;margin:10px 2px;color:var(--mute)}
+.row{display:flex;justify-content:space-between;gap:10px;text-align:left}.row.on{outline:3px solid var(--ac)}
+.tools{display:flex;gap:8px;margin-top:16px}.mini{border:0;border-radius:99px;background:var(--card);color:var(--ink);padding:8px 14px;font:inherit;cursor:pointer}
+.cnt{color:var(--mute);margin:12px 2px 0}.go:disabled{opacity:.5;cursor:not-allowed}
 button:focus-visible{outline:3px solid var(--ac)}
 </style></head>
 <body><div id="app">
@@ -51,7 +57,7 @@ const W=[
 {la:"perīculum",de:"die Gefahr",ch:["perī","cu","lum"],g:[[60,10],[35,50],[65,50],[40,90]]},
 {la:"errāre",de:"sich verirren",ch:["er","rā","re"],g:[[10,50],[30,20],[50,70],[70,30],[90,60]]},
 {la:"adhortārī",de:"motivieren",ch:["adh","ort","ārī"],g:[[20,50],[80,50],[60,30],[80,50],[60,70]]}];
-const IDX=W.map((_,k)=>k), FILL=Array.from("abcdefghilmnopqrstuvāēīōū");
+let ACT;const IDX=W.map((_,k)=>k);ACT=IDX;const FILL=Array.from("abcdefghilmnopqrstuvāēīōū");
 // ---------- Helfer ----------
 const sh=a=>{a=[...a];for(let i=a.length-1;i>0;i--){const j=Math.random()*(i+1)|0;[a[i],a[j]]=[a[j],a[i]]}return a};
 const $=(t,c,x)=>{const e=document.createElement(t);if(c)e.className=c;if(x!=null)e.textContent=x;return e};
@@ -60,15 +66,16 @@ const wobble=e=>{e.classList.remove('shake');void e.offsetWidth;e.classList.add(
 let S,hint=null;
 // ---------- Ablauf ----------
 function home(){hd.hidden=true;P.textContent='';stage.replaceChildren();
- const c=$('div','card');c.append($('b','la','Gestenlerner'),$('small',0,'Prototyp: 6 Latein-Vokabeln, 5 Übungstypen'));
- const g=$('button','go','Starten');g.onclick=start;stage.append(c,g)}
-function start(){const q=[];
- IDX.forEach(k=>q.push({t:gest,k}));
- sh(IDX).forEach(k=>q.push({t:mc,k}));
+ const c=$('div','card');c.append($('b','la','EasyVoc'),$('small',0,'Version 1.1 · 6 Latein-Vokabeln, 6 Übungstypen'));
+ const g=$('button','go','Starten');g.onclick=select;stage.append(c,g)}
+function start(sel){ACT=sel||ACT;const q=[];
+ ACT.forEach(k=>q.push({t:gest,k}));
+ sh(ACT).forEach(k=>q.push({t:mc,k}));
  q.push({t:pairs});
- sh(IDX).filter(k=>W[k].ch.length>1).forEach(k=>q.push({t:spell,m:1,k}));
- sh(IDX).forEach(k=>q.push({t:spell,m:0,k}));
- sh(IDX).forEach(k=>q.push({t:grid,k}));
+ sh(ACT).filter(k=>W[k].ch.length>1).forEach(k=>q.push({t:spell,m:1,k}));
+ sh(ACT).forEach(k=>q.push({t:spell,m:0,k}));
+ sh(ACT).forEach(k=>q.push({t:grid,k}));
+ sh(ACT).forEach(k=>q.push({t:typeIn,k}));
  S={q,i:0,err:0,errW:W.map(()=>0)};hd.hidden=false;show()}
 function show(){hint=null;tipb.hidden=true;bar.style.width=S.i/S.q.length*100+'%';stage.replaceChildren();const T=S.q[S.i];T.t(T)}
 function ok(ms=500){setTimeout(()=>{S.i++;S.i>=S.q.length?done():show()},ms)}
@@ -78,8 +85,8 @@ tipb.onclick=()=>hint&&hint();
 document.getElementById('x').onclick=home;
 function done(){bar.style.width='100%';tipb.hidden=true;P.textContent='';stage.replaceChildren();
  const r=$('div','res');r.append($('h2',0,'Geschafft'),$('p',0,`${S.q.length} Aufgaben, ${S.err} Fehler`));
- const u=$('ul');W.forEach((w,k)=>u.append($('li','la',`${w.la} – ${w.de}: ${S.errW[k]} Fehler`)));
- const b=$('button','go','Nochmal');b.onclick=start;r.append(u,b);stage.append(r)}
+ const u=$('ul');ACT.forEach(k=>u.append($('li','la',`${W[k].la} – ${W[k].de}: ${S.errW[k]} Fehler`)));
+ const b=$('button','go','Nochmal');b.onclick=select;r.append(u,b);stage.append(r)}
 const card=(m,s,lat)=>{const c=$('div','card');const b=$('b',lat?'la':'',m);c.append(b);if(s)c.append($('small',0,s));stage.append(c)};
 // ---------- 1. Geste lernen ----------
 function gest(T){const w=W[T.k];P.textContent='Lerne mit Gesten: Fahre die Linie mit dem Finger nach.';card(w.la,w.de,1);
@@ -100,15 +107,15 @@ function gest(T){const w=W[T.k];P.textContent='Lerne mit Gesten: Fahre die Linie
  stage.append(svg)}
 // ---------- 2. Multiple Choice (Latein → Deutsch) ----------
 function mc(T){P.textContent='Minitest: Wähle die richtige Übersetzung.';card(W[T.k].la,'',1);
- const o=$('div','opts');sh([T.k,...sh(IDX.filter(k=>k!==T.k)).slice(0,3)]).forEach(k=>{const b=$('button','opt',W[k].de);
+ const o=$('div','opts');sh([T.k,...sh(ACT.filter(k=>k!==T.k)).slice(0,3)]).forEach(k=>{const b=$('button','opt',W[k].de);
   b.onclick=()=>{if(k===T.k){b.classList.add('ok');ok()}else{b.classList.add('bad');wobble(b);bad(T.k)}};o.append(b)});stage.append(o)}
 // ---------- 3. Paare finden ----------
-function pairs(){P.textContent='Minitest: Finde die passenden Paare.';const c=$('div','cols'),cl=$('div'),cr=$('div');let sel=null,left=IDX.length;
+function pairs(){P.textContent='Minitest: Finde die passenden Paare.';const c=$('div','cols'),cl=$('div'),cr=$('div');let sel=null,left=ACT.length;
  const mk=(k,side)=>{const b=$('button','opt',side?W[k].de:W[k].la);if(!side)b.classList.add('la');
   b.onclick=()=>{if(!sel||sel.side===side){sel&&sel.b.classList.remove('sel');sel={k,side,b};b.classList.add('sel');return}
    if(sel.k===k){[sel.b,b].forEach(x=>{x.classList.remove('sel');x.classList.add('ok');x.disabled=true});sel=null;if(!--left)ok(500)}
    else{bad(sel.k);[sel.b,b].forEach(x=>{x.classList.remove('sel');wobble(x)});sel=null}};return b};
- sh(IDX).forEach(k=>cl.append(mk(k,0)));sh(IDX).forEach(k=>cr.append(mk(k,1)));c.append(cl,cr);stage.append(c)}
+ sh(ACT).forEach(k=>cl.append(mk(k,0)));sh(ACT).forEach(k=>cr.append(mk(k,1)));c.append(cl,cr);stage.append(c)}
 // ---------- 4/5. Rechtschreibung (Wortteile oder Buchstaben) ----------
 function spell(T){const w=W[T.k],parts=T.m?w.ch:Array.from(w.la);let pos=0;
  P.textContent=`Rechtschreibung: Wähle die ${T.m?'Wortteile':'Buchstaben'} in der richtigen Reihenfolge.`;card(w.de);
@@ -138,5 +145,31 @@ function grid(T){const w=W[T.k],ch=Array.from(w.la),path=walk(ch.length);
   if(seq.map(i=>L[i]).join('')===w.la){cells.forEach((c,i)=>seq.includes(i)&&c.classList.add('ok'));ok(600)}
   else{if(seq.length>1)bad(T.k);wobble(g);seq=[];paint()}};
  setHint(()=>cells[path[0][0]*5+path[0][1]].classList.add('tip'));stage.append(g)}
+// ---------- Vokabelauswahl vor der Abfrage ----------
+function select(){hd.hidden=true;P.textContent='Welche Vokabeln möchtest du abfragen?';stage.replaceChildren();
+ const sel=new Set(ACT);const list=$('div','opts'),info=$('p','cnt'),go=$('button','go','Abfrage starten');
+ const upd=()=>{info.textContent=`${sel.size} von ${W.length} ausgewählt (mindestens 2)`;go.disabled=sel.size<2;
+  [...list.children].forEach((b,i)=>{b.setAttribute('aria-pressed',sel.has(i));b.classList.toggle('on',sel.has(i))})};
+ W.forEach((w,k)=>{const b=$('button','opt row');b.append($('span','la',w.la),$('span',0,w.de));b.onclick=()=>{sel.has(k)?sel.delete(k):sel.add(k);upd()};list.append(b)});
+ const row=$('div','tools'),all=$('button','mini','Alle'),none=$('button','mini','Keine'),back=$('button','mini','Zurück');
+ all.onclick=()=>{IDX.forEach(k=>sel.add(k));upd()};none.onclick=()=>{sel.clear();upd()};back.onclick=home;row.append(back,all,none);
+ go.onclick=()=>{if(sel.size>=2)start(IDX.filter(k=>sel.has(k)))};stage.append(row,list,info,go);upd()}
+// ---------- 7. Letzte Methode: Deutsch eintippen ----------
+const lev=(a,b)=>{const d=Array.from({length:a.length+1},(_,i)=>{const r=Array(b.length+1).fill(0);r[0]=i;return r});for(let j=1;j<=b.length;j++)d[0][j]=j;
+ for(let i=1;i<=a.length;i++)for(let j=1;j<=b.length;j++){d[i][j]=Math.min(d[i-1][j]+1,d[i][j-1]+1,d[i-1][j-1]+(a[i-1]===b[j-1]?0:1));
+  if(i>1&&j>1&&a[i-1]===b[j-2]&&a[i-2]===b[j-1])d[i][j]=Math.min(d[i][j],d[i-2][j-2]+1)}return d[a.length][b.length]};
+const norm=s=>s.toLowerCase().replace(/[.,;:!?"'()]/g,'').replace(/\s+/g,' ').trim();
+const strip=s=>s.replace(/^(der|die|das|ein|eine|sich)\s+/,'');
+function judge(u,c){u=norm(u);c=norm(c);if(!u)return'bad';const a=strip(u),b=strip(c);if(u===c||a===b)return'exact';
+ const tol=b.length<=3?0:b.length<=7?1:2;return lev(a,b)<=tol?'typo':'bad'}
+function typeIn(T){const w=W[T.k];P.textContent='Letzte Methode: Gib die deutsche Übersetzung ein.';card(w.la,'',1);
+ const inp=$('input','inp');inp.type='text';inp.autocomplete='off';inp.autocapitalize='off';inp.spellcheck=false;inp.setAttribute('aria-label','Deutsche Übersetzung');
+ const chk=$('button','go','Prüfen'),fb=$('div','fb');let fin=false;
+ const submit=()=>{if(fin)return;fin=true;const r=judge(inp.value,w.de);inp.disabled=chk.disabled=true;
+  if(r!=='bad'){inp.classList.add('ok');fb.textContent=r==='typo'?`Fast richtig, geschrieben wird: ${w.de}`:'Richtig!';ok(r==='typo'?1500:600)}
+  else{bad(T.k);inp.classList.add('bad');fb.textContent=`Richtig wäre: ${w.de}`;
+   const acc=$('button','opt','Gelten lassen'),nx=$('button','opt','Weiter'),bx=$('div','opts');
+   acc.onclick=()=>{S.err--;S.errW[T.k]--;acc.disabled=nx.disabled=true;ok(150)};nx.onclick=()=>{acc.disabled=nx.disabled=true;ok(150)};bx.append(acc,nx);stage.append(bx)}};
+ chk.onclick=submit;inp.onkeydown=e=>{if(e.key==='Enter')submit()};stage.append(inp,fb,chk);inp.focus()}
 home();
 </script></body></html>
