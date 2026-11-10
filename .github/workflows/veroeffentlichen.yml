@@ -1,0 +1,18 @@
+name: Veröffentlichen
+on:
+  push:
+    branches: [main, test]
+permissions:
+  contents: write
+jobs:
+  pub:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: mkdir _pub && cp index.html _pub/
+      - uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./_pub
+          destination_dir: ${{ github.ref_name == 'test' && 'test' || '' }}
+          keep_files: true
